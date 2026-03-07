@@ -1,0 +1,22 @@
+/secrets
+.kube/*
+
+# Terraform
+.terraform/
+*.tfvars
+*.tfstate*
+*.hcl
+!.github/linters/.tflint.hcl
+
+*.iso
+
+auth
+secret
+pull-secret.txt
+credentials.json
+
+*.crt
+*.key
+*.pem
+
+.DS_Store
