@@ -5,7 +5,7 @@ const OrderModel = {
   orderId: { type: DataTypes.STRING, allowNull: false, unique: true },
   customerEmail: { type: DataTypes.STRING, allowNull: false },
   items: { type: DataTypes.JSON, allowNull: false },
-  total: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  totalPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
   status: { type: DataTypes.STRING, defaultValue: 'Pending' },
   createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updatedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
