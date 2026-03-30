@@ -14,7 +14,11 @@ Building a RESTful API with Node.js and Express.js
 
 ### Run the API
 
-To run the API locally, execute the following command:
+To run the API locally, first cd into the directory storing the api and app.js file:
+
+`cd api`
+
+Then, execute the following command:
 
 `node app.js`
 
