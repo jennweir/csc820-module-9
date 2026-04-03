@@ -19,6 +19,9 @@ spec:
         image: docker.io/jennweir/csc820-application:04032026@sha256:962f01eecc9266b11fd46935f82de7af1da160e156f67daf68b11fd78f3e443d
         ports:
           - containerPort: 3000
+        volumeMounts:
+          - name: db-storage
+            mountPath: /api/storage
         resources:
           limits:
             memory: "256Mi"
@@ -26,3 +29,7 @@ spec:
           requests:
             memory: "128Mi"
             cpu: "50m"
+      volumes:
+        - name: sqlite-db
+          persistentVolumeClaim:
+            claimName: sqlite-db
