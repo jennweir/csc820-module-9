@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 
-export WIF_POOL="gitlab"
-export WIF_PROVIDER="gitlab-gitlab"
-export SA_NAME="sa-deployer"
+export WIF_POOL="gitlab-ci"
+export WIF_PROVIDER="gitlab-gitlab-ci"
 export PROJECT_ID="project-1ec027c6-aa52-4cc0-aa8"
-export PROJECT_NUMBER="877046273961"
-export GITLAB_NAMESPACE_ID="36474446"
-export SUBJECT="project_path:jennweir/*" # the gitlab ci project path under the jennweir namespace
+export GITLAB_NAMESPACE_ID="128951886"
+export SUBJECT="project_path:jenniferp.weir/csc820-application" # the gitlab ci project path
 
 # https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines#gcloud_1
 
 gcloud iam workload-identity-pools create $WIF_POOL \
     --location="global" \
     --description="pool for authentication with gitlab ci" \
-    --display-name="gitlab"
+    --display-name="gitlab-ci"
 
 gcloud iam workload-identity-pools providers create-oidc $WIF_PROVIDER \
     --location="global" \
@@ -22,6 +20,10 @@ gcloud iam workload-identity-pools providers create-oidc $WIF_PROVIDER \
     --attribute-mapping="google.subject=assertion.sub,attribute.namespace_id=assertion.namespace_id" \
     --attribute-condition="assertion.namespace_id=='$GITLAB_NAMESPACE_ID'"
 
-gcloud iam service-accounts add-iam-policy-binding $SA_NAME@$PROJECT_ID.iam.gserviceaccount.com \
-    --role=roles/iam.workloadIdentityUser \
-    --member="principal://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$WIF_POOL/subject/$SUBJECT"
+gcloud projects add-iam-policy-binding project-1ec027c6-aa52-4cc0-aa8 \
+    --member="principal://iam.googleapis.com/projects/877046273961/locations/global/workloadIdentityPools/gitlab-ci/subject/project_path:jenniferp.weir/csc820-application:ref_type:branch:ref:main" \
+    --role="roles/container.developer"
+
+gcloud projects add-iam-policy-binding project-1ec027c6-aa52-4cc0-aa8 \
+    --member="principal://iam.googleapis.com/projects/877046273961/locations/global/workloadIdentityPools/gitlab-ci/subject/project_path:jenniferp.weir/csc820-application:ref_type:branch:ref:main" \
+    --role="roles/viewer"
