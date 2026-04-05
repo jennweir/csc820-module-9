@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csc820-api
+  labels:
+    app: csc820-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: csc820-api
+  template:
+    metadata:
+      labels:
+        app: csc820-api
+    spec:
+      containers:
+      - name: csc820-api
+        image: docker.io/jennweir/csc820-application:04032026@sha256:962f01eecc9266b11fd46935f82de7af1da160e156f67daf68b11fd78f3e443d
+        ports:
+          - containerPort: 3000
+        volumeMounts:
+          - name: db-storage
+            mountPath: /api/storage
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+      volumes:
+        - name: sqlite-db
+          persistentVolumeClaim:
+            claimName: sqlite-db

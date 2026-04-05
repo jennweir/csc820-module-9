@@ -1,4 +1,4 @@
-# CSC820 Module 9
+# CSC820 Containerized Application
 
 Building a RESTful API with Node.js and Express.js
 
