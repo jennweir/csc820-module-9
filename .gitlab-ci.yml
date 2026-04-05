@@ -1,27 +1,35 @@
 stages:
   - build
   - deploy
+  - test
 
+# https://docs.gitlab.com/ci/docker/authenticate_registry/#option-1-run-docker-login
 build:
   stage: build
   image: docker:latest
   services:
     - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login --username "$DOCKER_USERNAME" --password "$DOCKER_PASSWORD"
   script:
-    - docker build -t jennweir/csc820-application .
-    - docker push jennweir/csc820-application
+    - docker build --platform linux/amd64 -t jennweir/csc820-application:latest .
+    - docker push jennweir/csc820-application:latest
+  after_script:
+    - docker logout
 
 deploy:
   stage: deploy
   image: google/cloud-sdk:latest
   variables:
     WORKLOAD_IDENTITY_PROJECT_NUMBER: "877046273961"
-    WORKLOAD_IDENTITY_POOL: "gitlab"
-    WORKLOAD_IDENTITY_PROVIDER: "gitlab-gitlab"
-    SERVICE_ACCOUNT: "sa-deployer@project-1ec027c6-aa52-4cc0-aa8.iam.gserviceaccount.com"
+    WORKLOAD_IDENTITY_POOL: "gitlab-ci"
+    WORKLOAD_IDENTITY_PROVIDER: "gitlab-gitlab-ci"
+    GCP_PROJECT_ID: "project-1ec027c6-aa52-4cc0-aa8"
     GOOGLE_APPLICATION_CREDENTIALS: $CI_BUILDS_DIR/.workload_identity.wlconfig
     GCP_CLUSTER_NAME: "autopilot-cluster-1"
-    GCP_CLUSTER_ZONE: "us-central1-a"
+    GCP_CLUSTER_ZONE: "us-central1"
 
   id_tokens:
     WORKLOAD_IDENTITY_TOKEN:
@@ -39,16 +47,63 @@ deploy:
         "token_url": "https://sts.googleapis.com/v1/token",
         "credential_source": {
           "file": "$CI_BUILDS_DIR/.workload_identity.jwt"
-        },
-        "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$SERVICE_ACCOUNT:generateAccessToken"
+        }
       }
       EOF
 
-    # use wif to authenticate with gcp via service account impersonation
-    - gcloud auth application-default login --impersonate-service-account=$SERVICE_ACCOUNT
+    # uses workload identity federation (wif principal) to authenticate with gcp
+    - export GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS
+    - gcloud auth login --cred-file=$GOOGLE_APPLICATION_CREDENTIALS
+    - gcloud config set project $GCP_PROJECT_ID
     - gcloud container clusters get-credentials $GCP_CLUSTER_NAME --zone $GCP_CLUSTER_ZONE
     - kubectl apply -f deployment.yaml
     - kubectl apply -f service.yaml
     - kubectl apply -f pvc.yaml
+  only:
+    - main
+
+test:
+  stage: test
+  image: google/cloud-sdk:latest
+  variables:
+    WORKLOAD_IDENTITY_PROJECT_NUMBER: "877046273961"
+    WORKLOAD_IDENTITY_POOL: "gitlab-ci"
+    WORKLOAD_IDENTITY_PROVIDER: "gitlab-gitlab-ci"
+    GCP_PROJECT_ID: "project-1ec027c6-aa52-4cc0-aa8"
+    GOOGLE_APPLICATION_CREDENTIALS: $CI_BUILDS_DIR/.workload_identity.wlconfig
+    GCP_CLUSTER_NAME: "autopilot-cluster-1"
+    GCP_CLUSTER_ZONE: "us-central1"
+  id_tokens:
+    WORKLOAD_IDENTITY_TOKEN:
+      aud: https://iam.googleapis.com/projects/$WORKLOAD_IDENTITY_PROJECT_NUMBER/locations/global/workloadIdentityPools/$WORKLOAD_IDENTITY_POOL/providers/$WORKLOAD_IDENTITY_PROVIDER
+  script:
+    - |-
+      echo $WORKLOAD_IDENTITY_TOKEN > $CI_BUILDS_DIR/.workload_identity.jwt
+      cat << EOF > $GOOGLE_APPLICATION_CREDENTIALS
+      {
+        "type": "external_account",
+        "audience": "//iam.googleapis.com/projects/$WORKLOAD_IDENTITY_PROJECT_NUMBER/locations/global/workloadIdentityPools/$WORKLOAD_IDENTITY_POOL/providers/$WORKLOAD_IDENTITY_PROVIDER",
+        "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+        "token_url": "https://sts.googleapis.com/v1/token",
+        "credential_source": {
+          "file": "$CI_BUILDS_DIR/.workload_identity.jwt"
+        }
+      }
+      EOF
+
+    - export GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS
+    - gcloud auth login --cred-file=$GOOGLE_APPLICATION_CREDENTIALS
+    - gcloud config set project $GCP_PROJECT_ID
+    - gcloud container clusters get-credentials $GCP_CLUSTER_NAME --zone $GCP_CLUSTER_ZONE
+    
+    # check pods are running and ready to accept requests
+    - kubectl wait --for=condition=ready pod -l app=csc820-api --timeout=300s
+    
+    # retrieve the public external IP of the service
+    - export SERVICE_IP=$(kubectl get service csc820-api-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    
+    # basic curl tests to ensure the application is working correctly after each deployment
+    - curl -f http://$SERVICE_IP/status || exit 1
+    - curl -f http://$SERVICE_IP/orders || exit 1
   only:
     - main
