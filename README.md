@@ -1,6 +1,6 @@
-# CSC820 Containerized Application
+# Simple Nodejs Containerized API
 
-Building a RESTful API with Node.js and Express.js
+A lightweight RESTful API for managing orders, built with Node.js and Express. Features containerization with Docker, automated CI/CD through GitLab CI, and deployment to Google Kubernetes Engine (GKE) Autopilot clusters using Workload Identity Federation.
 
 ## Running API Locally
 
