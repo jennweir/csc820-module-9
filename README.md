@@ -1,4 +1,4 @@
-# Simple Nodejs Containerized API
+# Simple Containerized API
 
 A lightweight RESTful API for managing orders, built with Node.js and Express. Features containerization with Docker, automated CI/CD through GitLab CI, and deployment to Google Kubernetes Engine (GKE) Autopilot clusters using Workload Identity Federation.
 
