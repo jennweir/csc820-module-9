@@ -55,6 +55,34 @@ curl -X PATCH http://localhost:3000/orders/1 \
 curl -X DELETE http://localhost:3000/orders/1
 ```
 
+## Test the API with Jest
+
+First, ensure Jest is installed with `npm install --save-dev jest`
+
+Then configure npm scripts. In package.json file, update the scripts section to include:
+
+`"test": "jest"`
+
+`"coverage": "jest --coverage"`
+
+This will enable generation of a test coverage report.
+
+Run tests with `npm test` and generate API coverage report with `npm run coverage`.
+
+### Jest Tests
+
+`tests/get-api-status.test.js` includes unit tests that validate the API is operational
+
+`tests/get-all-orders.test.js` includes unit tests with mocking that validate the API properly returns all orders and handles errors/edge cases separately from the database connection
+
+`tests/get-order-by-id.test.js` includes unit tests with mocking that validate the API properly returns an order based on its orderId and handles errors/edge cases separately from the database connection
+
+`tests/post-create-order.test.js` includes unit tests with mocking that validate the API properly creates orders with the required order fields separately from the database connection
+
+`tests/update-order-status.test.js` includes unit tests with mocking that validate the API properly updates orders with the required status field separately from the database connection
+
+`tests/delete-order-id.test.js` includes unit tests with mocking that validate the API properly deletes order information separately from the database connection
+
 ## API Documentation
 
 ### 1. POST /orders

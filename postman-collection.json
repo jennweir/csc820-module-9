@@ -1,0 +1,730 @@
+{
+	"info": {
+		"_postman_id": "a1eb4f6c-47a9-4c81-a515-b5296082dd04",
+		"name": "api-order-management-system-module11",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "53594837",
+		"_collection_link": "https://jpw6797-8058723.postman.co/workspace/Jennifer-Weir's-Workspace~3a0a9707-a81c-4143-8884-19fb2602a194/collection/53594837-a1eb4f6c-47a9-4c81-a515-b5296082dd04?action=share&source=collection_link&creator=53594837"
+	},
+	"item": [
+		{
+			"name": "GET-api-status-success",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body contains status and timestamp\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql(\"Running\");",
+							"    pm.expect(jsonData).to.have.property(\"timestamp\");",
+							"});",
+							"",
+							"pm.test(\"Content-Type header is application/json\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+							"});",
+							"",
+							"pm.test(\"Response time is below 500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/status",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET-api-status-unknown-endpoint",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 404 due to unknown endpoint\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orderss",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orderss"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET-all-orders-success",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body contains the array of orders\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.eql(true);",
+							"    pm.expect(jsonData).to.have.property(\"orders\");",
+							"    pm.expect(jsonData.orders).to.be.an(\"array\");",
+							"    pm.expect(jsonData).to.have.property(\"count\");",
+							"});",
+							"",
+							"pm.test(\"Every order has all of its expected fields\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.count > 0) {",
+							"        jsonData.orders.forEach(order => {",
+							"            pm.expect(order).to.have.property(\"id\");",
+							"            pm.expect(order).to.have.property(\"customerEmail\");",
+							"            pm.expect(order).to.have.property(\"items\");",
+							"            pm.expect(order).to.have.property(\"totalPrice\");",
+							"            pm.expect(order).to.have.property(\"status\");",
+							"        });",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"The number of orders is the same as the size of the orders array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.count).to.eql(jsonData.orders.length);",
+							"});",
+							"",
+							"pm.test(\"Validating a performant retrieval of all orders is less than 2000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST-create-order",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Store orderId for collection variable in other tests\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.collectionVariables.set(\"orderId\", jsonData.order.id);",
+							"});",
+							"",
+							"pm.test(\"Response body contains order information\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.eql(true);",
+							"    pm.expect(jsonData).to.have.property(\"order\");",
+							"    pm.expect(jsonData.order.id).to.be.a(\"number\");",
+							"    pm.expect(jsonData.order.customerEmail).to.eql(\"johndoe@email.com\");",
+							"    pm.expect(jsonData.order.status).to.eql(\"Pending\");",
+							"});",
+							"",
+							"pm.test(\"Response contains email confirmation\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.notification.emailSent).to.eql(true);",
+							"    pm.expect(jsonData.notification.to).to.eql(\"johndoe@email.com\");",
+							"});",
+							"",
+							"pm.test(\"Response time accounts for email sending (2000ms)\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.above(2000);",
+							"});",
+							"",
+							"pm.test(\"Content-Type header is application/json\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"customerEmail\": \"johndoe@email.com\",\n  \"items\": [\"item1\", \"item2\"],\n  \"totalPrice\": 99\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST-create-order-missing-items",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 400 when missing items\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Failed order due to missing items\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Missing required field: items\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"customerEmail\": \"johndoe@email.com\",\n  \"totalPrice\": 99\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST-create-order-missing-email",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 400 when missing customer email\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Failed order due to missing customer email\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Missing required field: customerEmail\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"items\": [\"item1\", \"item2\"],\n  \"totalPrice\": 99\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST-create-order-missing-price",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 400 when missing total price\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Failed order due to missing total price\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Missing required field: totalPrice\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"customerEmail\": \"johndoe@email.com\",\n  \"items\": [\"item1\", \"item2\"]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET-order-by-id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body contains the requested order\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.eql(true);",
+							"    pm.expect(jsonData).to.have.property(\"order\");",
+							"    pm.expect(jsonData.order.id).to.be.a(\"number\");",
+							"});",
+							"",
+							"pm.test(\"Order contains all required fields\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    var order = jsonData.order;",
+							"    pm.expect(order).to.have.property(\"customerEmail\");",
+							"    pm.expect(order).to.have.property(\"items\");",
+							"    pm.expect(order).to.have.property(\"totalPrice\");",
+							"    pm.expect(order).to.have.property(\"status\");",
+							"    pm.expect(order).to.have.property(\"createdAt\");",
+							"});",
+							"",
+							"pm.test(\"Response time is below 500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders/{{orderId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET-order-by-id-nonexistent",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 404 when order not found\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test(\"Failed order retrieval because order not found\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Order not found\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders/1100",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"1100"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PATCH-update-order-status-id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Order status updated successfully\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.eql(true);",
+							"    pm.expect(jsonData.order.status).to.eql(\"Shipped\");",
+							"});",
+							"",
+							"pm.test(\"Response has updated order data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.order).to.have.property(\"id\");",
+							"    pm.expect(jsonData.order).to.have.property(\"customerEmail\");",
+							"    pm.expect(jsonData.order).to.have.property(\"totalPrice\");",
+							"    pm.expect(jsonData.order).to.have.property(\"updatedAt\");",
+							"});",
+							"",
+							"pm.test(\"Response time is below 500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"Shipped\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders/{{orderId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PATCH-update-order-status-id-fail",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 404 when order not found\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test(\"Failed order update because order not found\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Order not found\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"Shipped\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders/1100",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"1100"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PATCH-update-order-status-missing",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 400 when status update not provided\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Failed order update because status update not found\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Status field is required\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/orders/{{orderId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE-order-id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response indicates deletion was successful\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.eql(true);",
+							"    pm.expect(jsonData.message).to.eql(\"Order deleted\");",
+							"});",
+							"",
+							"pm.test(\"Response time is below 500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders/{{orderId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE-order-id-nonexistent",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 404 when order not found\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test(\"Failed order delete because order not found\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Order not found\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders/1100",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"1100"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE-order-id-no-id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code 404 when order not found\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test(\"Failed order delete because order not found\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.eql(\"Order not found\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/orders/1100",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"orders",
+						"1100"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "orderId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
