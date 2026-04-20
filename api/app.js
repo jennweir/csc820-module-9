@@ -5,7 +5,6 @@ const order = require('./common/models/Order');
 const Order = order(sequelize);
 
 app.use(express.json());
-sequelize.sync();
 
 // Simulates email confirmation for a promise-based delay when creating an order
 const sendEmailConfirmation = async (customerEmail) => {
@@ -170,4 +169,9 @@ app.delete('/orders/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (require.main === module) {
+  sequelize.sync().then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  });
+}
+module.exports = app;
