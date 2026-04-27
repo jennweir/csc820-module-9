@@ -105,6 +105,7 @@ ansible --version # verify the ansible installation was successful
 > `chmod 600 "${KEY_PAIR_PATH}"`
 
 - SSH access to VM verified successful connection with `ssh -i "${KEY_PAIR_PATH}" ubuntu@"${VM_IP}"`
+- Security group (if in AWS; equivalent required for other cloud providers) configured to allow inbound traffic on ports 22 (SSH), 80 (HTTP), 3000 (Node app port), and database port (e.g., 5432 for PostgreSQL).
 
 ### Running Ansible Playbooks
 
@@ -131,6 +132,8 @@ The deployed application runs on the virtual machine at `http://<VM_IP>:3000` wi
 - `PUT http://<VM_IP>:3000/orders/:id` - Update order status
 - `DELETE http://<VM_IP>:3000/orders/:id` - Delete an order
 
+> As this API is currently an unauthenticated endpoint, there is no authentication requirement for accessing the API.
+
 The deployed application uses PostgreSQL running on the virtual machine as localhost.
 
 Database Name: `my_database`
@@ -144,6 +147,11 @@ Password: `securepassword123`
 To complete a verification of the deployed API, utilize the test.sh script and supply the virtual machine IP address as an argument. This will execute basic curl calls to validate the API status is healthy post-deployment and the orders endpoint retrieves information from the database, which ensures the connection is established.
 
 `./test.sh <VM_IP>`
+
+### Known Issues or Limitations
+
+- Ansible playbook `copy:` parameter was replaced with `synchronize:` as the `copy` action was consistently hanging and blocking the execution of the rest of the playbook.
+- To assist with lowering the amount of time to execute the synchronize, `node_modules` was excluded from the transfer since it is assumed these modules would be successfully regenerated on the virtual machine once the appropriate packages are installed.
 
 ## API Documentation
 
