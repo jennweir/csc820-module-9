@@ -1,13 +1,13 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "description": "",
+  "description": "A simple API for deployment demonstration purposes",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Jennifer Weir",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

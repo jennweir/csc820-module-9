@@ -83,6 +83,76 @@ Run tests with `npm test` and generate API coverage report with `npm run coverag
 
 `tests/delete-order-id.test.js` includes unit tests with mocking that validate the API properly deletes order information separately from the database connection
 
+## Deploy the API to a Virtual Machine with Ansible
+
+### Ansible Local Setup on MacOS
+
+```bash
+brew update
+brew install ansible
+ansible --version # verify the ansible installation was successful
+```
+
+### Prerequisites
+
+- Running EC2 instance or similar compute virtual machine available
+
+> `export VM_IP=<VM_IP>`
+
+- .pem file with permissions that are not too open for connecting with the VM
+
+> `export KEY_PAIR_PATH=/Users/jenn/Downloads/module13-csc820.pem`
+> `chmod 600 "${KEY_PAIR_PATH}"`
+
+- SSH access to VM verified successful connection with `ssh -i "${KEY_PAIR_PATH}" ubuntu@"${VM_IP}"`
+- Security group (if in AWS; equivalent required for other cloud providers) configured to allow inbound traffic on ports 22 (SSH), 80 (HTTP), 3000 (Node app port), and database port (e.g., 5432 for PostgreSQL).
+
+### Running Ansible Playbooks
+
+To deploy the api onto the virtual machine,
+
+```bash
+ansible-playbook -i "${VM_IP}," -u ubuntu --private-key "${KEY_PAIR_PATH}" deploy.yml
+```
+
+In case of a need to roll back and undo the actions executed in the `deploy.yml`, run the rollback playbook `rollback.yml`
+
+```bash
+ansible-playbook -i "${VM_IP}," -u ubuntu --private-key "${KEY_PAIR_PATH}" rollback.yml
+```
+
+### Access Details for the Deployed Application
+
+The deployed application runs on the virtual machine at `http://<VM_IP>:3000` with the following available endpoints
+
+- `GET http://<VM_IP>:3000/status` - API status health check
+- `GET http://<VM_IP>:3000/orders` - Retrieve all orders
+- `GET http://<VM_IP>:3000/orders/:id` - Retrieve a specific order by orderId
+- `POST http://<VM_IP>:3000/orders` - Create a new order
+- `PUT http://<VM_IP>:3000/orders/:id` - Update order status
+- `DELETE http://<VM_IP>:3000/orders/:id` - Delete an order
+
+> As this API is currently an unauthenticated endpoint, there is no authentication requirement for accessing the API.
+
+The deployed application uses PostgreSQL running on the virtual machine as localhost.
+
+Database Name: `my_database`
+Username: `app_user`
+Password: `securepassword123`
+
+> In a production environment, these database values should not be stored in plaintext and committed to version control within the ansible playbook. These values are included solely for demonstration purposes and ease of use in a test environment.
+
+### Brief Verification Test
+
+To complete a verification of the deployed API, utilize the test.sh script and supply the virtual machine IP address as an argument. This will execute basic curl calls to validate the API status is healthy post-deployment and the orders endpoint retrieves information from the database, which ensures the connection is established.
+
+`./test.sh <VM_IP>`
+
+### Known Issues or Limitations
+
+- Ansible playbook `copy:` parameter was replaced with `synchronize:` as the `copy` action was consistently hanging and blocking the execution of the rest of the playbook.
+- To assist with lowering the amount of time to execute the synchronize, `node_modules` was excluded from the transfer since it is assumed these modules would be successfully regenerated on the virtual machine once the appropriate packages are installed.
+
 ## API Documentation
 
 ### 1. POST /orders

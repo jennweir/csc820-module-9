@@ -1,0 +1,88 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Node.js and npm
+      apt:
+        name: 
+          - nodejs
+          - npm
+        state: present
+
+    - name: Install PostgreSQL and Python dependencies
+      apt:
+        name: 
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2 # Required for Ansible postgresql modules
+          - acl # Required to allow Ansible to become the postgres user
+        state: present
+
+    - name: Ensure PostgreSQL service is running
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Create database
+      postgresql_db:
+        name: my_database
+        state: present
+      become_user: postgres
+
+    - name: Create database user
+      postgresql_user:
+        login_db: my_database # login_db is the newer parameter name since db is deprecated
+        name: app_user
+        password: securepassword123
+        state: present
+      become_user: postgres
+
+    - name: Grant privileges to database user
+      postgresql_privs: # newer mode to grant privileges, privs
+        login_db: my_database # login_db is the newer parameter name since db is deprecated
+        role: app_user
+        priv: ALL
+        type: database
+        state: present
+      become_user: postgres
+
+    # - name: Copy application files
+    #   copy:
+    #     src: /Users/jenn/Documents/grad-school/820/simple-containerized-api/api
+    #     dest: /home/ubuntu
+
+    - name: Remove old api directory if it already exists
+      file:
+        path: /home/ubuntu/api
+        state: absent
+
+    - name: Sync application files
+      synchronize:
+        src: /Users/jenn/Documents/grad-school/820/simple-containerized-api/api/
+        dest: /home/ubuntu/api
+        rsync_opts:
+          - "--exclude=node_modules"
+          - "--timeout=300"
+      delegate_to: localhost
+      become: false
+
+    - name: Install app dependencies
+      npm:
+        path: /home/ubuntu/api
+        state: present
+
+    - name: Install PM2 globally
+      npm:
+        name: pm2
+        global: yes
+        state: present
+
+    - name: Start the Node.js app with PM2
+      command: pm2 start app.js --name "api"
+      args:
+        chdir: /home/ubuntu/api
